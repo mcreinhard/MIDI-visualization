@@ -1,3 +1,8 @@
-circle: {
-    fill: "black";
+circle {
+    fill: black;
+}
+
+line {
+    stroke: blue;
+    stroke-width: 5;
 }
