@@ -22,6 +22,42 @@ var intervalColors = {
   12: "blue"
 };
 
+
+var chordFromNotes = function(noteArr) {
+  var result = 0;
+  for (var i = 0; i < noteArr.length; i++) {
+    result |= (1 << (noteArr[i] % 12));
+  }
+  return result;
+};
+
+var chords = {};
+for (var i = 0; i < 12; i++) {
+  var chord = chordFromNotes([i, i+4, i+7]);
+  var reducedChord = chordFromNotes([i, i+4]);
+  chords[chord] = "major";
+  chords[reducedChord] = "major";
+  chord = chordFromNotes([i, i+3, i+7]);
+  reducedChord = chordFromNotes([i, i+3]);
+  chords[chord] = "minor";
+  chords[reducedChord] = "minor";
+  chord = chordFromNotes([i, i+4, i+7, i+10]);
+  reducedChord = chordFromNotes([i, i+4, i+10]);
+  chords[chord] = "dominant7"; 
+  chords[reducedChord] = "dominant7";
+  chord = chordFromNotes([i, i+3, i+6, i+9]);
+  reducedChord = chordFromNotes([i, i+3, i+9]);
+  chords[chord] = "diminished7";
+  chords[reducedChord] = "diminished7";
+}
+
+var chordColors = {
+  major: "blue",
+  minor: "purple",
+  dominant7: "green",
+  diminished7: "red"
+};
+
 var svg = d3.select("body")
             .append("svg")
             .attr("width", width)
@@ -37,6 +73,7 @@ var listenerCallback = function(data) {
   var velocity = data.velocity; // the velocity of the note
   var value = data.value;
   var track = data.track;
+  var color = data.color;
   if (type === "noteOn") {
     MIDI.noteOn(0, note, velocity, 0);
     svg.append("circle")
@@ -44,6 +81,7 @@ var listenerCallback = function(data) {
       .attr("cy", 50)
       .attr("r", velocity / 7)
       .attr("opacity", 1)
+      .style("fill", color)
       .transition()
       .duration(50)
       .attr("r", velocity / 4)
@@ -78,32 +116,7 @@ var loaderCallback = function(midi) {
 var handleEvents = function() {
   var time = stream[streamIndex].time;
   var events = stream[streamIndex].events;
-
-  var intervals = stream[streamIndex].intervals;
-  if (intervals !== undefined) {
-    for (var i = 0; i < intervals.length; i++) {
-      svg.append("line")
-        .attr({
-          "x1": intervals[i].start * 10,
-          "x2": intervals[i].end * 10,
-          "y1": 50,
-          "y2": 50,
-          "opacity": 1
-        })
-        .style("stroke", intervalColors[intervals[i].size])
-        .transition()
-        .duration(50)
-        .transition()
-        .duration(2000)
-        .ease("sin")
-        .attr({
-          "y1": height - 50,
-          "y2": height - 50,
-          "opacity": 0
-        })
-        .remove();
-    }
-  }
+  var notes = stream[streamIndex].notes;
   
   for (var i = 0; i < events.length; i++) {
     var event = events[i];
