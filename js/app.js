@@ -6,57 +6,8 @@ var midi = {};
 var streamIndex= 0;
 var tempoMultiplier = 1;
 var pedal = false;
-
-var intervalColors = {
-  1: "orange",
-  2: "yellow",
-  3: "purple",
-  4: "brown",
-  5: "green",
-  6: "red",
-  7: "green",
-  8: "purple",
-  9: "brown",
-  10: "yellow",
-  11: "orange",
-  12: "blue"
-};
-
-
-var chordFromNotes = function(noteArr) {
-  var result = 0;
-  for (var i = 0; i < noteArr.length; i++) {
-    result |= (1 << (noteArr[i] % 12));
-  }
-  return result;
-};
-
-var chords = {};
-for (var i = 0; i < 12; i++) {
-  var chord = chordFromNotes([i, i+4, i+7]);
-  var reducedChord = chordFromNotes([i, i+4]);
-  chords[chord] = "major";
-  chords[reducedChord] = "major";
-  chord = chordFromNotes([i, i+3, i+7]);
-  reducedChord = chordFromNotes([i, i+3]);
-  chords[chord] = "minor";
-  chords[reducedChord] = "minor";
-  chord = chordFromNotes([i, i+4, i+7, i+10]);
-  reducedChord = chordFromNotes([i, i+4, i+10]);
-  chords[chord] = "dominant7"; 
-  chords[reducedChord] = "dominant7";
-  chord = chordFromNotes([i, i+3, i+6, i+9]);
-  reducedChord = chordFromNotes([i, i+3, i+9]);
-  chords[chord] = "diminished7";
-  chords[reducedChord] = "diminished7";
-}
-
-var chordColors = {
-  major: "blue",
-  minor: "purple",
-  dominant7: "green",
-  diminished7: "red"
-};
+var paused = false;
+var delay = 1000;
 
 var svg = d3.select("body")
             .append("svg")
@@ -75,7 +26,31 @@ var listenerCallback = function(data) {
   var track = data.track;
   var color = data.color;
   if (type === "noteOn") {
-    MIDI.noteOn(0, note, velocity, 0);
+
+    svg.append("circle")
+      .attr({"cx": note * 10,
+             "cy": 50,
+             "r": 2,
+             "opacity": 1})
+      .style("fill", "black")
+      .transition()
+      .ease("linear")
+      .duration(delay)
+      .attr("cy", 150)
+      .transition()
+      .ease("sin")
+      .duration(100)
+      .attr("r", velocity / 4)
+      .style("fill", color)
+      .each("end", function() {MIDI.noteOn(0, note, velocity, 0);})
+      .transition()
+      .duration(2000)
+      .attr({"cy": height - 50,
+             "r": 0,
+             "opacity": 0})
+      .remove();
+    
+   /* 
     svg.append("circle")
       .attr("cx", note * 10)
       .attr("cy", 50)
@@ -91,11 +66,13 @@ var listenerCallback = function(data) {
       .attr("cy", height - 50)
       .attr("r", 0)
       .attr("opacity", 0)
-      .remove();
+      .remove();*/
   } else if (type === "noteOff") {
-    if (!pedal) MIDI.noteOff(0, note, 0);
+    setTimeout(function() {
+      if (!pedal) MIDI.noteOff(0, note, 0);
+    }, delay);
   } else if (type === "pedal") {
-    pedal = value;
+    setTimeout(function() {pedal = value;}, delay);
   }
 };
 
@@ -107,6 +84,7 @@ var loaderCallback = function(midi) {
     callback: function() {
 			var player = MIDI.Player;
       stream = parseMIDI(midi);
+      $("span.length").text(stream.length);
       streamIndex = 0;
       handleEvents();
     }
@@ -124,5 +102,28 @@ var handleEvents = function() {
   }
   
   streamIndex++;
-  setTimeout(handleEvents, (stream[streamIndex].time - time) / (1000 * tempoMultiplier));
+  $("span.position").text(streamIndex);
+  if (!paused) {
+    setTimeout(handleEvents, (stream[streamIndex].time - time) / (1000 * tempoMultiplier));
+  }
 };
+
+
+$(document).ready(function() {
+  $("button.pause").on("click", function() {
+    paused = true;
+  });
+  $("button.play").on("click", function() {
+    paused = false;
+    handleEvents();
+  });
+  $("button.setPosition").on("click", function() {
+    var $positionInput = $("input.positionInput");
+    if ($positionInput.val().length > 0) {
+      streamIndex = parseInt($positionInput.val());
+      pedal = false;
+    }
+    $positionInput.val("");
+    $positionInput.focus();
+  });
+}); 
