@@ -1,0 +1,9 @@
+generator/sf2/*
+generator/ruby/soundfont*
+**/source*
+**/build*
+node_modules*
+*/soundfont/*
+!examples/soundfont/acoustic_grand_piano*
+!examples/soundfont/synth_drum*
+*.gz
