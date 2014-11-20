@@ -1,0 +1,23 @@
+{
+  "name": "MIDI-visualization",
+  "version": "0.0.0",
+  "description": "MIDI Visualization",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mcreinhard/MIDI-visualization.git"
+  },
+  "author": "Michael Reinhard",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mcreinhard/MIDI-visualization/issues"
+  },
+  "homepage": "https://github.com/mcreinhard/MIDI-visualization",
+  "dependencies": {
+    "express": "^4.10.2",
+    "serve-static": "^1.7.1"
+  }
+}
